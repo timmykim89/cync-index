@@ -10,37 +10,32 @@ const SEOUL_REGIONS = [
   { id: "seochon",   parts: ["Seochon", "Eunpyeong"], num: "04" },
   { id: "apgujeong", parts: ["Cheongdam", "Dosan", "Apgujeong"], num: "05" },
   { id: "samsung",   parts: ["Samsung", "Gangnam"], num: "06" },
-  { id: "other",     parts: ["Other", "Seoul"], num: "07" },
-  { id: "outskirts", parts: ["Seoul", "Outskirts"], num: "08" },
+  { id: "other",     parts: ["Other Seoul"], num: "07" },
+  { id: "outskirts", parts: ["Seoul Outskirts"], num: "08" },
 ];
 
 const CITIES = ["Home", "Seoul", "Busan", "Daegu", "Gwangju", "Jeju", "Other Korea"];
 const SEOUL_CATS = ["Galleries", "Museums", "Food", "Hotels", "Shopping", "Sights"];
 const CITY_CATS  = ["Galleries", "Museums", "Food", "Hotels", "Sights"];
 
+const REGION_ALIASES = { cheongdam: "apgujeong", dosan: "apgujeong" };
+
 function parseCSV(text) {
   const lines = text.split("\n").filter(l => l.trim());
   if (lines.length < 2) return [];
   const parseLine = (line) => {
-    const result = [];
-    let cur = "", inQ = false;
+    const result = []; let cur = "", inQ = false;
     for (let i = 0; i < line.length; i++) {
       if (line[i] === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
       else if (line[i] === "," && !inQ) { result.push(cur.trim()); cur = ""; }
       else cur += line[i];
     }
-    result.push(cur.trim());
-    return result;
+    result.push(cur.trim()); return result;
   };
   const headers = parseLine(lines[0]).map(h => h.replace(/^"|"$/g, "").trim());
   return lines.slice(1).map(line => {
-    const vals = parseLine(line);
-    const obj = {};
-    headers.forEach((h, i) => {
-      let v = (vals[i] || "").replace(/^"|"$/g, "").trim();
-      if (v === "#ERROR!" || v === "null") v = "";
-      obj[h] = v;
-    });
+    const vals = parseLine(line); const obj = {};
+    headers.forEach((h, i) => { let v = (vals[i] || "").replace(/^"|"$/g, "").trim(); if (v === "#ERROR!" || v === "null") v = ""; obj[h] = v; });
     if (!obj.name && obj.nameKo) obj.name = obj.nameKo;
     return obj;
   }).filter(r => r.name && r.name.trim());
@@ -59,52 +54,52 @@ async function fetchSheet(sheetName) {
   } catch(e) { return []; }
 }
 
-function PlaceCard({ place, isOpen, onToggle }) {
+function PlaceCard({ place, isOpen, onToggle, index }) {
   return (
     <div className={`card ${isOpen ? "open" : ""}`} onClick={onToggle}>
-      <div className="card-header">
-        <div style={{flex:1}}>
-          <div className="name-row">
-            {place.type && <span className="type-tag">{place.type}</span>}
-            <span className="name">{place.name}</span>
-            <span className="name-ko">{place.nameKo}</span>
-          </div>
-          {place.comment && <div className="comment">{place.comment}</div>}
+      <div className="card-inner">
+        <div className="card-left">
+          <div className="card-num">{String(index + 1).padStart(2, "0")}</div>
         </div>
-        <div className={`card-icon ${isOpen ? "open" : ""}`}>+</div>
+        <div className="card-body">
+          <div className="card-name-row">
+            {place.type && <span className="type-pill">{place.type}</span>}
+            <span className="place-name">{place.name}</span>
+          </div>
+          {place.nameKo && <div className="place-ko">{place.nameKo}</div>}
+          {place.comment && <div className="place-comment">{place.comment}</div>}
+        </div>
+        <div className="card-toggle">{isOpen ? "×" : "+"}</div>
       </div>
       {isOpen && (
-        <div className="detail" onClick={e => e.stopPropagation()}>
-          {place.note && <div className="note-en">{place.note}</div>}
-          <div className="info-grid">
+        <div className="card-detail" onClick={e => e.stopPropagation()}>
+          {place.note && <p className="detail-note">{place.note}</p>}
+          <div className="detail-grid">
             {place.menu && (
-              <div className="info-row">
-                <div className="info-lbl">Try</div>
-                <div className="info-val italic">{place.menu}</div>
+              <div className="detail-row">
+                <span className="detail-lbl">Try</span>
+                <span className="detail-val italic">{place.menu}</span>
               </div>
             )}
             {(place.addressEn || place.addressKo) && (
-              <div className="info-row">
-                <div className="info-lbl">Address</div>
-                <div className="info-val">
-                  {place.addressEn}
-                  {place.addressKo && <div className="info-val-ko">{place.addressKo}</div>}
-                </div>
+              <div className="detail-row">
+                <span className="detail-lbl">Address</span>
+                <span className="detail-val">{place.addressEn}{place.addressKo && <span className="detail-ko"> / {place.addressKo}</span>}</span>
               </div>
             )}
             {place.hours && (
-              <div className="info-row">
-                <div className="info-lbl">Hours</div>
-                <div className="info-val">{place.hours}</div>
+              <div className="detail-row">
+                <span className="detail-lbl">Hours</span>
+                <span className="detail-val">{place.hours}</span>
               </div>
             )}
             {(place.map || place.website) && (
-              <div className="info-row">
-                <div className="info-lbl">Links</div>
-                <div className="btn-row">
-                  {place.map && <a href={place.map} target="_blank" rel="noopener noreferrer" className="map-btn" onClick={e=>e.stopPropagation()}>Maps ↗</a>}
-                  {place.website && <a href={place.website} target="_blank" rel="noopener noreferrer" className="web-btn" onClick={e=>e.stopPropagation()}>Website ↗</a>}
-                </div>
+              <div className="detail-row">
+                <span className="detail-lbl">Links</span>
+                <span className="detail-val">
+                  {place.map && <a href={place.map} target="_blank" rel="noopener noreferrer" className="link-btn" onClick={e => e.stopPropagation()}>Maps ↗</a>}
+                  {place.website && <a href={place.website} target="_blank" rel="noopener noreferrer" className="link-btn" onClick={e => e.stopPropagation()}>Site ↗</a>}
+                </span>
               </div>
             )}
           </div>
@@ -123,145 +118,356 @@ export default function CyncIndex() {
   const [data, setData]         = useState({});
   const [loading, setLoading]   = useState(false);
 
-  const regionData  = SEOUL_REGIONS.find(r => r.id === region);
-  const cats        = city === "Seoul" ? SEOUL_CATS : CITY_CATS;
+  const regionData = SEOUL_REGIONS.find(r => r.id === region);
+  const cats = city === "Seoul" ? SEOUL_CATS : CITY_CATS;
 
   useEffect(() => {
     if (view === "home") return;
-    const sheetName = city;
-    if (data[sheetName] !== undefined) return;
+    if (data[city] !== undefined) return;
     setLoading(true);
-    fetchSheet(sheetName)
-      .then(rows => setData(prev => ({ ...prev, [sheetName]: rows })))
-      .catch(() => setData(prev => ({ ...prev, [sheetName]: [] })))
+    fetchSheet(city)
+      .then(rows => setData(prev => ({ ...prev, [city]: rows })))
+      .catch(() => setData(prev => ({ ...prev, [city]: [] })))
       .finally(() => setLoading(false));
   }, [city, view]);
 
   const getPlaces = () => {
     const rows = data[city] || [];
     if (city === "Seoul" && view === "region") {
-      const regionAliases = {
-      'cheongdam': 'apgujeong',
-      'dosan': 'apgujeong',
-    };
-    return rows.filter(r => {
-      if (!r.region) return false;
-      const rRegion = r.region.toLowerCase();
-      const mapped = regionAliases[rRegion] || rRegion;
-      return mapped === region.toLowerCase() && r.category === cat;
-    });
+      return rows.filter(r => {
+        if (!r.region) return false;
+        const mapped = REGION_ALIASES[r.region.toLowerCase()] || r.region.toLowerCase();
+        return mapped === region && r.category === cat;
+      });
     }
     return rows.filter(r => r.category === cat);
   };
 
   const places = getPlaces();
-
   const goHome  = () => { setView("home"); setRegion(null); setExpanded(null); };
   const goSeoul = () => { setCity("Seoul"); setView("seoul"); setRegion(null); setCat("Galleries"); setExpanded(null); };
   const goCity  = (c) => { setCity(c); setView("city"); setRegion(null); setCat("Galleries"); setExpanded(null); };
-
   const isActive = (c) => {
-    if (c === "Home")  return view === "home";
+    if (c === "Home") return view === "home";
     if (c === "Seoul") return city === "Seoul" && (view === "seoul" || view === "region");
     return city === c && view === "city";
   };
 
+  const CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #e8e8e8;
+      --gray-400: #999999;
+      --gray-600: #555555;
+      --line: 1px solid var(--gray-200);
+      --line-strong: 1px solid var(--black);
+      --pad: 20px;
+      --font-display: 'Unbounded', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body { background: var(--white); color: var(--black); -webkit-font-smoothing: antialiased; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px var(--pad);
+      border-bottom: var(--line-strong);
+      position: sticky; top: 0; background: var(--white); z-index: 50;
+      height: 56px;
+    }
+    .topbar-logo {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      letter-spacing: -0.03em; color: var(--black); cursor: pointer;
+      text-transform: lowercase;
+    }
+    .topbar-back {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 400;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gray-600); cursor: pointer;
+      border-bottom: 1px solid var(--gray-400);
+      padding-bottom: 1px;
+      transition: color 0.15s;
+    }
+    .topbar-back:hover { color: var(--black); border-color: var(--black); }
+
+    /* ── CITY TABS ── */
+    .city-tabs {
+      display: flex; overflow-x: auto; scrollbar-width: none;
+      border-bottom: var(--line-strong);
+    }
+    .city-tabs::-webkit-scrollbar { display: none; }
+    .city-tab {
+      flex-shrink: 0; padding: 0 14px; height: 40px;
+      display: flex; align-items: center;
+      font-family: var(--font-mono); font-size: 9px; font-weight: 400;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gray-400); background: none; border: none;
+      border-right: var(--line); cursor: pointer;
+      transition: color 0.12s;
+    }
+    .city-tab:last-child { border-right: none; }
+    .city-tab:hover:not(.active) { color: var(--gray-600); }
+    .city-tab.active { background: var(--black); color: var(--white); }
+
+    /* ── HERO ── */
+    .hero { border-bottom: var(--line-strong); }
+    .hero-header {
+      padding: 32px var(--pad) 24px;
+      border-bottom: var(--line);
+    }
+    .hero-date {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 300;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gray-400); margin-bottom: 20px;
+    }
+    .hero-title {
+      font-family: var(--font-display); font-weight: 900;
+      font-size: clamp(40px, 10.5vw, 80px);
+      letter-spacing: -0.04em; line-height: 0.88;
+    }
+    .hero-title-solid { display: block; color: var(--black); }
+    .hero-title-outline {
+      display: block;
+      -webkit-text-stroke: 1.5px var(--black);
+      color: var(--white);
+      paint-order: stroke fill;
+    }
+    .hero-section { padding: 24px var(--pad); border-bottom: var(--line); }
+    .hero-section:last-child { border-bottom: none; }
+    .hero-section-label {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 400;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--gray-400); margin-bottom: 10px;
+    }
+    .hero-section-text {
+      font-family: var(--font-body); font-size: 14px; font-weight: 300;
+      line-height: 1.8; color: var(--gray-600);
+    }
+    .hero-section-text strong { color: var(--black); font-weight: 500; }
+    .hero-section-text + .hero-section-text { margin-top: 10px; }
+    .hero-section-text.italic { font-style: italic; }
+
+    /* ── INDEX LIST (city/district list) ── */
+    .index-list { }
+    .index-list-header {
+      display: grid; grid-template-columns: 40px 1fr 20px;
+      padding: 8px var(--pad);
+      background: var(--black);
+    }
+    .index-list-header span {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 300;
+      letter-spacing: 0.14em; text-transform: uppercase; color: #444;
+    }
+    .index-row {
+      display: grid; grid-template-columns: 40px 1fr 20px;
+      align-items: center; padding: 0 var(--pad);
+      border-bottom: var(--line); cursor: pointer;
+      min-height: 60px; position: relative; overflow: hidden;
+    }
+    .index-row::after {
+      content: ''; position: absolute; left: 0; top: 0;
+      width: 0; height: 100%; background: var(--black);
+      transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); z-index: 0;
+    }
+    .index-row:hover::after { width: 100%; }
+    .index-row:hover .idx-num,
+    .index-row:hover .idx-label,
+    .index-row:hover .idx-arrow { color: var(--white); }
+    .idx-num {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 300;
+      color: var(--gray-400); z-index: 1; transition: color 0.2s;
+    }
+    .idx-label {
+      font-family: var(--font-display); font-size: clamp(11px, 2.8vw, 14px);
+      font-weight: 700; letter-spacing: -0.01em; text-transform: uppercase;
+      color: var(--black); z-index: 1; transition: color 0.2s;
+      padding: 16px 0;
+    }
+    .idx-arrow {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--gray-400); z-index: 1; transition: color 0.2s;
+      text-align: right;
+    }
+
+    /* ── PAGE HEADER (district/city) ── */
+    .page-header { padding: 28px var(--pad) 0; }
+    .page-title-wrap { margin-bottom: 24px; }
+    .page-title-part {
+      display: block;
+      font-family: var(--font-display); font-weight: 900;
+      font-size: clamp(32px, 8vw, 56px);
+      letter-spacing: -0.04em; line-height: 0.88;
+      text-transform: uppercase; color: var(--black);
+    }
+    .page-title-part.outline {
+      -webkit-text-stroke: 1.5px var(--black);
+      color: var(--white); paint-order: stroke fill;
+    }
+
+    /* ── CATEGORY TABS ── */
+    .cat-tabs {
+      display: flex; overflow-x: auto; scrollbar-width: none;
+      border-top: var(--line-strong); border-bottom: var(--line-strong);
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0; padding: 0 14px; height: 38px;
+      display: flex; align-items: center;
+      font-family: var(--font-mono); font-size: 9px; font-weight: 400;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gray-400); background: none; border: none;
+      border-right: var(--line); cursor: pointer;
+      transition: color 0.12s;
+    }
+    .cat-tab:last-child { border-right: none; }
+    .cat-tab:hover:not(.active) { color: var(--gray-600); }
+    .cat-tab.active { background: var(--black); color: var(--white); }
+
+    /* ── PLACE CARDS ── */
+    .cards-wrap { padding-bottom: 80px; }
+    .card {
+      border-bottom: var(--line); cursor: pointer;
+      transition: background 0.1s;
+    }
+    .card:hover, .card.open { background: var(--gray-100); }
+    .card-inner {
+      display: flex; align-items: flex-start;
+      padding: 16px var(--pad); gap: 12px;
+    }
+    .card-left { padding-top: 2px; }
+    .card-num {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 300;
+      color: var(--gray-400); letter-spacing: 0.04em;
+      width: 20px; flex-shrink: 0;
+    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-name-row { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; margin-bottom: 3px; }
+    .type-pill {
+      font-family: var(--font-mono); font-size: 7px; font-weight: 400;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--white); background: var(--black);
+      padding: 2px 6px; border-radius: 2px;
+      flex-shrink: 0; align-self: center; line-height: 1.4;
+    }
+    .place-name {
+      font-family: var(--font-display); font-size: clamp(13px, 3.2vw, 16px);
+      font-weight: 700; letter-spacing: -0.02em; text-transform: uppercase;
+      color: var(--black); line-height: 1.1;
+    }
+    .place-ko {
+      font-family: var(--font-body); font-size: 12px; font-weight: 300;
+      color: var(--gray-400); margin-bottom: 4px;
+    }
+    .place-comment {
+      font-family: var(--font-body); font-size: 13px; font-weight: 300;
+      color: var(--gray-600); line-height: 1.55;
+    }
+    .card-toggle {
+      font-family: var(--font-mono); font-size: 16px; font-weight: 300;
+      color: var(--gray-400); flex-shrink: 0; margin-top: 1px;
+      transition: color 0.15s; line-height: 1;
+    }
+    .card.open .card-toggle { color: var(--black); }
+
+    /* ── CARD DETAIL ── */
+    .card-detail {
+      padding: 0 var(--pad) 20px calc(var(--pad) + 32px);
+      animation: fadeIn 0.15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-note {
+      font-family: var(--font-body); font-size: 13px; font-weight: 300;
+      line-height: 1.8; color: var(--black);
+      padding: 14px 0; border-top: var(--line); border-bottom: var(--line);
+      margin-bottom: 14px;
+    }
+    .detail-grid { display: grid; gap: 8px; }
+    .detail-row { display: flex; gap: 12px; align-items: flex-start; }
+    .detail-lbl {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 300;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gray-400); width: 52px; flex-shrink: 0; padding-top: 2px;
+    }
+    .detail-val {
+      font-family: var(--font-body); font-size: 13px; font-weight: 300;
+      color: var(--gray-600); line-height: 1.55;
+    }
+    .detail-val.italic { font-style: italic; color: var(--black); }
+    .detail-ko { color: var(--gray-400); }
+    .link-btn {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-mono); font-size: 9px; font-weight: 400;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+      border-bottom: 1px solid var(--black); padding-bottom: 1px;
+      margin-right: 12px; transition: opacity 0.15s;
+    }
+    .link-btn:hover { opacity: 0.5; }
+
+    /* ── STATE ── */
+    .state-msg {
+      padding: 60px var(--pad);
+      font-family: var(--font-mono); font-size: 9px; font-weight: 300;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gray-400); text-align: center;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      border-top: var(--line-strong);
+      padding: 24px var(--pad) 32px;
+      margin-top: 40px;
+    }
+    .footer-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .footer-logo img { height: 26px; opacity: 0.9; }
+    .footer-links { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+    .footer-link {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 400;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+      border-bottom: 1px solid var(--black); padding-bottom: 1px;
+      transition: opacity 0.15s;
+    }
+    .footer-link:hover { opacity: 0.5; }
+    .footer-meta {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 300;
+      color: var(--gray-400); letter-spacing: 0.06em;
+      text-transform: uppercase; line-height: 2;
+    }
+  `;
+
   return (
-    <div style={{background:"#fff",minHeight:"100vh",color:"#111",overflowX:"hidden"}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;700;900&family=Archivo+Narrow:wght@400;500;600&family=JetBrains+Mono:wght@300;400&display=swap');
-        * { box-sizing:border-box; margin:0; padding:0; }
-        .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 20px; border-bottom:1px solid #111; position:sticky; top:0; background:#fff; z-index:30; }
-        .topbar-title { font-family:'Unbounded',sans-serif; font-size:28px; font-weight:700; color:#111; letter-spacing:-0.03em; cursor:pointer; }
-        .topbar-back { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:#bbb; cursor:pointer; transition:color 0.15s; }
-        .topbar-back:hover { color:#111; }
-        .city-nav { display:flex; border-bottom:1px solid #111; overflow-x:auto; scrollbar-width:none; }
-        .city-nav::-webkit-scrollbar { display:none; }
-        .city-btn { padding:10px 14px; background:none; border:none; border-right:1px solid #ebebeb; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#bbb; white-space:nowrap; transition:all 0.12s; flex-shrink:0; }
-        .city-btn.active { background:#111; color:#fff; }
-        .city-btn:hover:not(.active) { color:#111; }
-        .hero-top { padding:36px 20px 28px; border-bottom:1px solid #ebebeb; }
-        .hero-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:#bbb; margin-bottom:24px; }
-        .hero-title { font-family:'Unbounded',sans-serif; font-size:clamp(44px,11vw,88px); font-weight:900; letter-spacing:-0.04em; line-height:0.86; }
-        .hero-title-solid { display:block; color:#111; }
-        .hero-title-stroke { display:block; -webkit-text-stroke:2px #111; color:#fff; paint-order:stroke fill; text-shadow: none; }
-        .hero-section { padding:20px; border-bottom:1px solid #ebebeb; }
-        .hero-section:last-child { border-bottom:none; }
-        .hero-lbl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.18em; text-transform:uppercase; color:#bbb; margin-bottom:10px; }
-        .hero-text { font-family:'Archivo Narrow',sans-serif; font-size:14px; line-height:1.75; color:#555; margin-bottom:10px; }
-        .hero-text strong { color:#111; font-weight:600; }
-        .region-hdr { display:grid; grid-template-columns:36px 1fr 24px; padding:8px 20px; background:#111; }
-        .region-hdr span { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.18em; text-transform:uppercase; color:#444; }
-        .region-row { display:grid; grid-template-columns:36px 1fr 24px; align-items:center; padding:0 20px; border-bottom:1px solid #f0f0f0; cursor:pointer; min-height:56px; position:relative; overflow:hidden; }
-        .region-row::before { content:''; position:absolute; left:0; top:0; width:0; height:100%; background:#111; transition:width 0.25s cubic-bezier(0.4,0,0.2,1); z-index:0; }
-        .region-row:hover::before { width:100%; }
-        .rn { font-family:'JetBrains Mono',monospace; font-size:9px; color:#ccc; z-index:1; transition:color 0.25s; }
-        .rl { font-family:'Unbounded',sans-serif; font-size:clamp(10px,2.6vw,13px); font-weight:700; color:#111; text-transform:uppercase; letter-spacing:-0.01em; z-index:1; transition:color 0.25s; padding:14px 0; }
-        .ra { font-family:'JetBrains Mono',monospace; font-size:12px; color:#ccc; z-index:1; transition:color 0.25s; text-align:right; }
-        .region-row:hover .rn, .region-row:hover .rl, .region-row:hover .ra { color:#fff; }
-        .inner-hdr-body { padding:28px 20px 0; }
-        .inner-title-part { display:block; font-family:'Unbounded',sans-serif; font-size:clamp(36px,9vw,64px); font-weight:900; letter-spacing:-0.04em; line-height:0.88; text-transform:uppercase; color:#111; }
-        .inner-title-part.stroke { -webkit-text-stroke:2px #111; color:#fff; paint-order:stroke fill; }
-        .cat-nav { display:flex; border-top:1px solid #111; overflow-x:auto; scrollbar-width:none; }
-        .cat-nav::-webkit-scrollbar { display:none; }
-        .cat-btn { padding:10px 14px; background:none; border:none; border-right:1px solid #ebebeb; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#bbb; white-space:nowrap; transition:all 0.12s; flex-shrink:0; }
-        .cat-btn.active { background:#111; color:#fff; }
-        .cat-btn:hover:not(.active) { color:#111; }
-        .card { border-bottom:1px solid #f0f0f0; cursor:pointer; transition:background 0.1s; }
-        .card:hover, .card.open { background:#f8f8f8; }
-        .card-header { display:flex; justify-content:space-between; align-items:flex-start; padding:18px 20px; gap:12px; }
-        .name-row { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
-        .type-tag { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.14em; text-transform:uppercase; color:#fff; background:#111; padding:3px 7px; border-radius:2px; flex-shrink:0; align-self:center; }
-        .name { font-family:'Unbounded',sans-serif; font-size:clamp(13px,3.2vw,17px); font-weight:700; color:#111; letter-spacing:-0.02em; text-transform:uppercase; }
-        .name-ko { font-family:'Archivo Narrow',sans-serif; font-size:13px; color:#aaa; }
-        .comment { font-family:'Archivo Narrow',sans-serif; font-size:13px; color:#777; line-height:1.5; }
-        .card-icon { font-family:'JetBrains Mono',monospace; font-size:18px; color:#ccc; flex-shrink:0; transition:transform 0.2s; line-height:1; margin-top:2px; }
-        .card-icon.open { transform:rotate(45deg); color:#111; }
-        .detail { padding:0 20px 22px; animation:fadeIn 0.15s ease; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(-2px);}to{opacity:1;transform:translateY(0);} }
-        .note-en { font-family:'Archivo Narrow',sans-serif; font-size:14px; line-height:1.85; color:#333; padding:12px 0 14px; border-top:1px solid #ebebeb; border-bottom:1px solid #ebebeb; margin-bottom:14px; }
-        .info-grid { display:grid; gap:9px; }
-        .info-row { display:flex; gap:14px; align-items:flex-start; }
-        .info-lbl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.14em; text-transform:uppercase; color:#bbb; width:58px; flex-shrink:0; padding-top:3px; }
-        .info-val { font-family:'Archivo Narrow',sans-serif; font-size:14px; color:#333; line-height:1.55; }
-        .info-val.italic { font-style:italic; color:#111; }
-        .info-val-ko { font-size:12px; color:#bbb; margin-top:2px; }
-        .btn-row { display:flex; gap:7px; flex-wrap:wrap; }
-        .map-btn { display:inline-flex; align-items:center; padding:7px 13px; background:#111; color:#fff; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; transition:opacity 0.15s; }
-        .map-btn:hover { opacity:0.7; }
-        .web-btn { display:inline-flex; align-items:center; padding:7px 13px; background:#fff; color:#111; border:1px solid #111; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; transition:all 0.15s; }
-        .web-btn:hover { background:#111; color:#fff; }
-        .state-msg { padding:48px 20px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#ccc; text-align:center; }
-        .footer { border-top:1px solid #111; padding:20px; margin-top:40px; }
-        .footer-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; }
-        .footer-logo img { height:32px; }
-        .footer-links { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
-        .footer-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#111; text-decoration:none; font-weight:600; border-bottom:2px solid #111; padding-bottom:1px; transition:opacity 0.15s; }
-        .footer-link:hover { opacity:0.6; }
-        .footer-meta { font-family:'JetBrains Mono',monospace; font-size:8px; color:#777; letter-spacing:0.1em; text-transform:uppercase; line-height:1.9; }
-      `}</style>
+    <div style={{ background: "#fff", minHeight: "100vh", color: "#0a0a0a", overflowX: "hidden" }}>
+      <style>{CSS}</style>
 
       {/* TOPBAR */}
       <div className="topbar">
-        <div className="topbar-title" onClick={goHome}>cync index</div>
+        <div className="topbar-logo" onClick={goHome}>cync index</div>
         {view !== "home"
           ? <div className="topbar-back" onClick={() => {
               if (view === "region") { setView("seoul"); setRegion(null); setExpanded(null); }
-              else if (view === "seoul" || view === "city") goHome();
+              else goHome();
             }}>← Back</div>
-          : <div style={{width:60}} />
+          : <span />
         }
       </div>
 
-      {/* CITY NAV */}
-      <div className="city-nav">
+      {/* CITY TABS */}
+      <div className="city-tabs">
         {CITIES.map(c => (
-          <button key={c} className={`city-btn ${isActive(c) ? "active" : ""}`}
-            onClick={() => {
-              if (c === "Home")  goHome();
-              else if (c === "Seoul") goSeoul();
-              else goCity(c);
-            }}>
+          <button key={c} className={`city-tab ${isActive(c) ? "active" : ""}`}
+            onClick={() => { if (c === "Home") goHome(); else if (c === "Seoul") goSeoul(); else goCity(c); }}>
             {c}
           </button>
         ))}
@@ -269,124 +475,129 @@ export default function CyncIndex() {
 
       {/* HOME */}
       {view === "home" && (
-        <div>
-          <div style={{borderBottom:"1px solid #111"}}>
-            <div className="hero-top">
-              <div className="hero-tag">Jun 2026</div>
+        <>
+          <div className="hero">
+            <div className="hero-header">
+              <div className="hero-date">Jun 2026</div>
               <div className="hero-title">
                 <span className="hero-title-solid">cync index</span>
-                <span className="hero-title-stroke">carefully</span>
-                <span className="hero-title-stroke">picked</span>
+                <span className="hero-title-outline">carefully</span>
+                <span className="hero-title-outline">picked</span>
               </div>
             </div>
             <div className="hero-section">
-              <div className="hero-lbl">About cync</div>
-              <p className="hero-text"><strong>cync is a hybrid art institution that develops and operates art-based programs centered on exhibitions and projects.</strong></p>
-              <p className="hero-text">Working from cync space and through collaborative exhibitions with external institutions, cync organizes programs that address how contemporary art operates within broader social and cultural contexts — intersecting with technology, design, architecture, and fashion.</p>
+              <div className="hero-section-label">About cync</div>
+              <p className="hero-section-text"><strong>cync is a hybrid art institution that develops and operates art-based programs centered on exhibitions and projects.</strong></p>
+              <p className="hero-section-text">Working from cync space and through collaborative exhibitions with external institutions, cync organizes programs that address how contemporary art operates within broader social and cultural contexts — intersecting with technology, design, architecture, and fashion.</p>
             </div>
             <div className="hero-section">
-              <div className="hero-lbl">What we aim for</div>
-              <p className="hero-text">cync treats the works and relationships generated through its programs not as isolated outcomes, but as part of a longer cycle. Collections built through cync activities are directed toward donation and collaboration with public institutions — including M+ Hong Kong and MMCA Korea — establishing a model in which art circulates beyond private ownership and accumulates meaning over time.</p>
+              <div className="hero-section-label">What we aim for</div>
+              <p className="hero-section-text">cync treats the works and relationships generated through its programs not as isolated outcomes, but as part of a longer cycle. Collections built through cync activities are directed toward donation and collaboration with public institutions — including M+ Hong Kong and MMCA Korea — establishing a model in which art circulates beyond private ownership and accumulates meaning over time.</p>
             </div>
             <div className="hero-section">
-              <div className="hero-lbl">This Index</div>
-              <p className="hero-text" style={{fontStyle:"italic"}}>cync index is what we made for the people who come to Korea for its culture. The galleries, the restaurants that have been doing one thing right for decades, the museums worth crossing the city for. Filtered by us, for you.</p>
+              <div className="hero-section-label">This Index</div>
+              <p className="hero-section-text italic">cync index is what we made for the people who come to Korea for its culture. The galleries, the restaurants that have been doing one thing right for decades, the museums worth crossing the city for. Filtered by us, for you.</p>
             </div>
           </div>
-          <div className="region-hdr"><span>#</span><span>City</span><span /></div>
-          {[
-            {id:"Seoul",num:"01"},{id:"Busan",num:"02"},{id:"Daegu",num:"03"},
-            {id:"Gwangju",num:"04"},{id:"Jeju",num:"05"},{id:"Other Korea",num:"06"},
-          ].map(c => (
-            <div key={c.id} className="region-row"
-              onClick={() => c.id === "Seoul" ? goSeoul() : goCity(c.id)}>
-              <span className="rn">{c.num}</span>
-              <span className="rl">{c.id}</span>
-              <span className="ra">&#8594;</span>
-            </div>
-          ))}
-        </div>
+          <div className="index-list">
+            <div className="index-list-header"><span>#</span><span>City</span><span /></div>
+            {[["Seoul","01"],["Busan","02"],["Daegu","03"],["Gwangju","04"],["Jeju","05"],["Other Korea","06"]].map(([name, num]) => (
+              <div key={name} className="index-row"
+                onClick={() => name === "Seoul" ? goSeoul() : goCity(name)}>
+                <span className="idx-num">{num}</span>
+                <span className="idx-label">{name}</span>
+                <span className="idx-arrow">→</span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* SEOUL DISTRICT LIST */}
       {view === "seoul" && (
-        <div>
-          <div className="inner-hdr-body">
-            <div className="inner-title-part">Seoul</div>
-          </div>
-          <div className="region-hdr" style={{marginTop:20}}><span>#</span><span>District</span><span /></div>
-          {SEOUL_REGIONS.map(r => (
-            <div key={r.id} className="region-row"
-              onClick={() => { setRegion(r.id); setView("region"); setCat("Galleries"); setExpanded(null); }}>
-              <span className="rn">{r.num}</span>
-              <span className="rl">{r.parts.join(" · ")}</span>
-              <span className="ra">&#8594;</span>
+        <>
+          <div className="page-header">
+            <div className="page-title-wrap">
+              <span className="page-title-part">Seoul</span>
             </div>
-          ))}
-        </div>
+          </div>
+          <div className="index-list">
+            <div className="index-list-header"><span>#</span><span>District</span><span /></div>
+            {SEOUL_REGIONS.map(r => (
+              <div key={r.id} className="index-row"
+                onClick={() => { setRegion(r.id); setView("region"); setCat("Galleries"); setExpanded(null); }}>
+                <span className="idx-num">{r.num}</span>
+                <span className="idx-label">{r.parts.join(" · ")}</span>
+                <span className="idx-arrow">→</span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* SEOUL REGION */}
       {view === "region" && region && regionData && (
-        <div>
-          <div className="inner-hdr-body">
-            {regionData.parts.map((p, i) => (
-              <span key={i} className={`inner-title-part${i > 0 ? " stroke" : ""}`}>{p}</span>
-            ))}
+        <>
+          <div className="page-header">
+            <div className="page-title-wrap">
+              {regionData.parts.map((p, i) => (
+                <span key={i} className={`page-title-part${i > 0 ? " outline" : ""}`}>{p}</span>
+              ))}
+            </div>
           </div>
-          <div className="cat-nav">
+          <div className="cat-tabs">
             {SEOUL_CATS.map(c => (
-              <button key={c} className={`cat-btn ${cat === c ? "active" : ""}`}
+              <button key={c} className={`cat-tab ${cat === c ? "active" : ""}`}
                 onClick={() => { setCat(c); setExpanded(null); }}>{c}</button>
             ))}
           </div>
-          <div style={{paddingBottom:60}}>
-            {loading ? <div className="state-msg">Loading...</div>
-             : places.length === 0 ? <div className="state-msg">Nothing here yet.</div>
+          <div className="cards-wrap">
+            {loading ? <div className="state-msg">Loading</div>
+             : places.length === 0 ? <div className="state-msg">Nothing here yet</div>
              : places.map((p, i) => (
-                <PlaceCard key={i} place={p} isOpen={expanded===i} onToggle={() => setExpanded(expanded===i?null:i)} />
+                <PlaceCard key={i} place={p} index={i} isOpen={expanded === i} onToggle={() => setExpanded(expanded === i ? null : i)} />
              ))}
           </div>
-        </div>
+        </>
       )}
 
       {/* OTHER CITY */}
       {view === "city" && (
-        <div>
-          <div className="inner-hdr-body">
-            <span className="inner-title-part">{city}</span>
+        <>
+          <div className="page-header">
+            <div className="page-title-wrap">
+              <span className="page-title-part">{city}</span>
+            </div>
           </div>
-          <div className="cat-nav">
+          <div className="cat-tabs">
             {CITY_CATS.map(c => (
-              <button key={c} className={`cat-btn ${cat === c ? "active" : ""}`}
+              <button key={c} className={`cat-tab ${cat === c ? "active" : ""}`}
                 onClick={() => { setCat(c); setExpanded(null); }}>{c}</button>
             ))}
           </div>
-          <div style={{paddingBottom:60}}>
-            {loading ? <div className="state-msg">Loading...</div>
-             : places.length === 0 ? <div className="state-msg">Nothing here yet.</div>
+          <div className="cards-wrap">
+            {loading ? <div className="state-msg">Loading</div>
+             : places.length === 0 ? <div className="state-msg">Nothing here yet</div>
              : places.map((p, i) => (
-                <PlaceCard key={i} place={p} isOpen={expanded===i} onToggle={() => setExpanded(expanded===i?null:i)} />
+                <PlaceCard key={i} place={p} index={i} isOpen={expanded === i} onToggle={() => setExpanded(expanded === i ? null : i)} />
              ))}
           </div>
-        </div>
+        </>
       )}
 
       {/* FOOTER */}
       <div className="footer">
         <div className="footer-top">
-          <div className="footer-logo">
-            <img src={LOGO_SRC} alt="cync" />
-          </div>
+          <div className="footer-logo"><img src={LOGO_SRC} alt="cync" /></div>
           <div className="footer-links">
             <a href="https://cync.art" target="_blank" rel="noopener noreferrer" className="footer-link">cync.art ↗</a>
             <a href="https://instagram.com/cync.official" target="_blank" rel="noopener noreferrer" className="footer-link">@cync.official ↗</a>
           </div>
         </div>
         <div className="footer-meta">
-          B1–1F, 577 Tongil-ro, Eunpyeong-gu, Seoul, Korea<br/>
-          &copy; {new Date().getFullYear()} cync. All rights reserved.<br/>
-          This guide is optimised for mobile.
+          B1–1F, 577 Tongil-ro, Eunpyeong-gu, Seoul<br />
+          © {new Date().getFullYear()} cync. All rights reserved.<br />
+          Optimised for mobile.
         </div>
       </div>
     </div>
