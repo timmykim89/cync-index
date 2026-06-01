@@ -29,20 +29,41 @@ const CITY_CATS  = ["Galleries", "Museums", "Food", "Hotels", "Sights"];
 // ── Fetch sheet data ─────────────────────────────────────────────────────────
 
 async function fetchSheet(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
   const res = await fetch(url);
   const text = await res.text();
-  const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-  const cols = json.table.cols.map(c => c.label);
-  const rows = json.table.rows
-    .filter(r => r && r.c && r.c[0] && r.c[0].v)
-    .map(r => {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  
+  // Parse CSV properly handling quoted fields
+  const parseCSVLine = (line) => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') {
+        if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (line[i] === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += line[i];
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const headers = parseCSVLine(lines[0]);
+  const rows = lines.slice(1)
+    .map(line => {
+      const vals = parseCSVLine(line);
       const obj = {};
-      cols.forEach((col, i) => {
-        obj[col] = r.c[i] ? (r.c[i].v !== null ? String(r.c[i].v) : "") : "";
-      });
+      headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
       return obj;
-    });
+    })
+    .filter(r => r.name && r.name.trim());
   return rows;
 }
 
