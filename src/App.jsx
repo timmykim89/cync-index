@@ -30,14 +30,12 @@ const CITY_CATS  = ["Galleries", "Museums", "Food", "Hotels", "Sights"];
 
 async function fetchSheet(sheetName) {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
-    const res = await fetch(url);
+    // Use gviz API which handles CORS better
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+    const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) return [];
     const text = await res.text();
-    // If redirected to login page or error
-    if (text.includes('<!DOCTYPE') || text.includes('<html')) return [];
-    const lines = text.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return [];
+    if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('errorMessage')) return [];
     
     const parseCSVLine = (line) => {
       const result = [];
@@ -58,17 +56,27 @@ async function fetchSheet(sheetName) {
       return result;
     };
 
-    const headers = parseCSVLine(lines[0]);
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+
+    const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
     const rows = lines.slice(1)
       .map(line => {
         const vals = parseCSVLine(line);
         const obj = {};
-        headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^#ERROR!$/, ''); });
+        headers.forEach((h, i) => {
+          let v = (vals[i] || '').replace(/^"|"$/g, '').trim();
+          if (v === '#ERROR!' || v === 'null') v = '';
+          obj[h] = v;
+        });
+        // Fill name from nameKo if empty
+        if (!obj.name && obj.nameKo) obj.name = obj.nameKo;
         return obj;
       })
       .filter(r => r.name && r.name.trim());
     return rows;
   } catch(e) {
+    console.error('fetchSheet error:', sheetName, e);
     return [];
   }
 }
@@ -98,7 +106,7 @@ function PlaceCard({ place, isOpen, onToggle }) {
               <div className="info-val">{place.addressEn}<div className="info-val-ko">{place.addressKo}</div></div>
             </div>
             {place.hours && <div className="info-row"><div className="info-lbl">Hours</div><div className="info-val">{place.hours}</div></div>}
-            {place.phone && <div className="info-row"><div className="info-lbl">Phone</div><div className="info-val">{place.phone}</div></div>}
+
             <div className="info-row">
               <div className="info-lbl">Links</div>
               <div className="btn-row">
@@ -169,10 +177,10 @@ export default function CyncIndex() {
         @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700;900&family=Archivo+Narrow:wght@400;500;600&family=JetBrains+Mono:wght@300;400&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
 
-        .topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #111; position:sticky; top:0; background:#fff; z-index:30; }
+        .topbar { display:flex; align-items:center; padding:14px 20px; border-bottom:1px solid #111; position:sticky; top:0; background:#fff; z-index:30; gap:12px; }
         .topbar-logo { cursor:pointer; display:flex; align-items:center; }
         .topbar-logo img { height:22px; }
-        .topbar-center { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:300; letter-spacing:0.22em; text-transform:uppercase; color:#bbb; }
+        .topbar-center { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:400; letter-spacing:0.18em; text-transform:uppercase; color:#111; margin-left:auto; padding-right:20px; }
         .topbar-right { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:#bbb; cursor:pointer; transition:color 0.15s; width:60px; text-align:right; }
         .topbar-right:hover { color:#111; }
 
@@ -185,9 +193,9 @@ export default function CyncIndex() {
 
         .hero { border-bottom:1px solid #111; }
         .hero-top { padding:36px 20px 28px; border-bottom:1px solid #ebebeb; }
-        .hero-tag { display:inline-flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:300; letter-spacing:0.2em; text-transform:uppercase; color:#bbb; margin-bottom:24px; }
+        .hero-tag { display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:300; letter-spacing:0.2em; text-transform:uppercase; color:#bbb; margin-bottom:24px; }
         .hero-tag-dot { width:4px; height:4px; background:#111; border-radius:50%; }
-        .hero-title { font-family:'Unbounded',sans-serif; font-size:clamp(44px,11vw,88px); font-weight:900; letter-spacing:-0.04em; line-height:0.86; text-transform:uppercase; }
+        .hero-title { font-family:'Unbounded',sans-serif; font-size:clamp(44px,11vw,88px); font-weight:900; letter-spacing:-0.04em; line-height:0.86; }
         .hero-title-line { display:block; color:#111; }
         .hero-title-line.stroke { -webkit-text-stroke:1.5px #111; color:#fff; paint-order:stroke fill; }
         .hero-bottom { display:grid; grid-template-columns:1fr 1fr; }
@@ -261,7 +269,7 @@ export default function CyncIndex() {
         .footer-logo { display:flex; align-items:center; }
         .footer-logo img { height:28px; }
         .footer-links { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
-        .footer-link { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:#111; text-decoration:none; border-bottom:1px solid #111; transition:opacity 0.15s; }
+        .footer-link { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#111; text-decoration:none; font-weight:600; border-bottom:2px solid #111; padding-bottom:2px; transition:opacity 0.15s; }
         .footer-link:hover { opacity:0.6; }
         .footer-meta { font-family:'JetBrains Mono',monospace; font-size:8px; color:#777; letter-spacing:0.1em; text-transform:uppercase; line-height:1.9; }
       `}</style>
@@ -285,7 +293,7 @@ export default function CyncIndex() {
       <div className="city-nav">
         {CITIES.map(c => (
           <button key={c} className={`city-btn ${(c === "Home" && view === "home") || (c === "Seoul" && view === "seoul") || (c === city && view === "city") || (c === city && view === "region") ? "active" : ""}`}
-            onClick={() => navTo(c, c === "Seoul" ? "home" : "city")}>
+            onClick={() => { if (c === "Home") navTo("Seoul", "home"); else if (c === "Seoul") navTo("Seoul", "seoul"); else navTo(c, "city"); }}>
             {c}
           </button>
         ))}
@@ -298,9 +306,9 @@ export default function CyncIndex() {
             <div className="hero-top">
               <div className="hero-tag"><span className="hero-tag-dot"/>cync index<span className="hero-tag-dot"/>Jun 2026</div>
               <div className="hero-title">
-                <span className="hero-title-line">Korea</span>
-                <span className="hero-title-line stroke">Carefully</span>
-                <span className="hero-title-line stroke">Considered</span>
+                <span className="hero-title-line">cync index</span>
+                <span className="hero-title-line stroke">carefully</span>
+                <span className="hero-title-line stroke">picked</span>
               </div>
             </div>
             <div className="hero-bottom">
@@ -399,13 +407,40 @@ export default function CyncIndex() {
         </>
       )}
 
-      {/* OTHER CITY */}
-      {view === "city" && (
+      {/* SEOUL CITY — shows district list when coming from home */}
+      {view === "city" && city === "Seoul" && (
         <>
           <div className="inner-header">
             <div className="inner-header-body">
               <div className="inner-breadcrumb">
-                <span onClick={() => navTo(city,"home")}>Home</span>
+                <span onClick={() => { setView("home"); setRegion(null); }}>Home</span>
+                <span className="sep">/</span>
+                <span style={{color:"#111",cursor:"default"}}>Seoul</span>
+              </div>
+              <div className="inner-title"><span className="inner-title-part">Seoul</span></div>
+            </div>
+          </div>
+          <div className="region-section">
+            <div className="region-header"><span>#</span><span>District</span><span /></div>
+            {SEOUL_REGIONS.map(r => (
+              <div key={r.id} className="region-row"
+                onClick={() => { setView("region"); setRegion(r.id); setCat("Galleries"); setExpanded(null); }}>
+                <span className="rn">{r.num}</span>
+                <span className="rl">{r.parts.join(" · ")}</span>
+                <span className="ra">→</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* OTHER CITY */}
+      {view === "city" && city !== "Seoul" && (
+        <>
+          <div className="inner-header">
+            <div className="inner-header-body">
+              <div className="inner-breadcrumb">
+                <span onClick={() => { setView("home"); setRegion(null); }}>Home</span>
                 <span className="sep">/</span>
                 <span style={{color:"#111",cursor:"default"}}>{city}</span>
               </div>
@@ -420,7 +455,6 @@ export default function CyncIndex() {
           </div>
           <div style={{paddingBottom:60}}>
             {loading ? <div className="state-msg">Loading...</div>
-             : error ? <div className="state-msg error">{error}</div>
              : places.length === 0 ? <div className="state-msg">Nothing here yet.</div>
              : places.map((p,i) => (
                 <PlaceCard key={i} place={p} isOpen={expanded===i} onToggle={() => setExpanded(expanded===i?null:i)} />
