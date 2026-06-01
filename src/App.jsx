@@ -22,49 +22,55 @@ const SEOUL_REGIONS = [
   { id: "outskirts", parts: ["Seoul", "Outskirts"],                num: "08" },
 ];
 
-const CITIES = ["Seoul", "Busan", "Daegu", "Gwangju", "Jeju", "Other Korea"];
+const CITIES = ["Home", "Seoul", "Busan", "Daegu", "Gwangju", "Jeju", "Other Korea"];
 const SEOUL_CATS = ["Galleries", "Museums", "Food", "Hotels", "Shopping", "Sights"];
 const CITY_CATS  = ["Galleries", "Museums", "Food", "Hotels", "Sights"];
 
 // ── Fetch sheet data ─────────────────────────────────────────────────────────
 
 async function fetchSheet(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
-  const res = await fetch(url);
-  const text = await res.text();
-  const lines = text.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  
-  // Parse CSV properly handling quoted fields
-  const parseCSVLine = (line) => {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      if (line[i] === '"') {
-        if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
-        else inQuotes = !inQuotes;
-      } else if (line[i] === ',' && !inQuotes) {
-        result.push(current.trim());
-        current = '';
-      } else {
-        current += line[i];
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const text = await res.text();
+    // If redirected to login page or error
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) return [];
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+    
+    const parseCSVLine = (line) => {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') {
+          if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (line[i] === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += line[i];
+        }
       }
-    }
-    result.push(current.trim());
-    return result;
-  };
+      result.push(current.trim());
+      return result;
+    };
 
-  const headers = parseCSVLine(lines[0]);
-  const rows = lines.slice(1)
-    .map(line => {
-      const vals = parseCSVLine(line);
-      const obj = {};
-      headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
-      return obj;
-    })
-    .filter(r => r.name && r.name.trim());
-  return rows;
+    const headers = parseCSVLine(lines[0]);
+    const rows = lines.slice(1)
+      .map(line => {
+        const vals = parseCSVLine(line);
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^#ERROR!$/, ''); });
+        return obj;
+      })
+      .filter(r => r.name && r.name.trim());
+    return rows;
+  } catch(e) {
+    return [];
+  }
 }
 
 // ── Place Card ───────────────────────────────────────────────────────────────
@@ -130,12 +136,12 @@ export default function CyncIndex() {
   // Fetch data when city or region changes
   useEffect(() => {
     const sheetName = city;
-    if (data[sheetName]) return;
+    if (data[sheetName] !== undefined) return;
     setLoading(true);
     setError(null);
     fetchSheet(sheetName)
       .then(rows => setData(prev => ({ ...prev, [sheetName]: rows })))
-      .catch(() => setError("Could not load data. Please try again."))
+      .catch(() => setData(prev => ({ ...prev, [sheetName]: [] })))
       .finally(() => setLoading(false));
   }, [city]);
 
@@ -155,6 +161,7 @@ export default function CyncIndex() {
     setCity(newCity); setView(newView); setRegion(newRegion);
     setCat("Galleries"); setExpanded(null);
   };
+
 
   return (
     <div style={{ background:"#fff", minHeight:"100vh", color:"#111", overflowX:"hidden" }}>
@@ -277,7 +284,7 @@ export default function CyncIndex() {
       {/* CITY NAV */}
       <div className="city-nav">
         {CITIES.map(c => (
-          <button key={c} className={`city-btn ${city === c ? "active" : ""}`}
+          <button key={c} className={`city-btn ${(c === "Home" && view === "home") || (c === "Seoul" && view === "seoul") || (c === city && view === "city") || (c === city && view === "region") ? "active" : ""}`}
             onClick={() => navTo(c, c === "Seoul" ? "home" : "city")}>
             {c}
           </button>
