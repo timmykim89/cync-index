@@ -360,7 +360,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 .cat-btn.on{color:var(--K);font-weight:400;border-bottom:1.5px solid var(--K);}
 
 /* ── PLACE CARDS ── */
-.cards{padding-bottom:80px;}
+.cards{padding-bottom:100px;}
 .pc{border-bottom:1px solid var(--G2);cursor:pointer;transition:background 0.08s;}
 .pc:hover,.pc.open{background:var(--G1);}
 .pc-row{display:flex;align-items:flex-start;padding:15px var(--p) 15px 16px;gap:0;}
@@ -402,8 +402,17 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 /* ── STATE / FOOTER ── */
 .st{padding:60px var(--p);text-align:center;font-family:var(--mono);font-size:8.5px;
   font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--G4);}
-.footer{background:var(--K);padding:28px var(--p) 44px;margin-top:56px;}
-.ft-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
+.footer{background:var(--W);padding:16px var(--p);margin-top:40px;border-top:1px solid var(--G2);}
+.sticky-bar{position:fixed;bottom:0;left:0;right:0;height:48px;
+  background:var(--K);z-index:80;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--p);border-top:1px solid #1a1a1a;}
+.sb-logo img{height:18px;filter:invert(1);}
+.sb-icons{display:flex;gap:18px;align-items:center;}
+.sb-icon{color:#fff;opacity:0.8;transition:opacity 0.15s;display:flex;align-items:center;}
+.sb-icon:hover{opacity:0.5;}
+.sb-icon svg{display:block;}
+.ft-top{display:none;}
 .ft-logo img{height:22px;filter:invert(1);}
 .ft-icons{display:flex;flex-direction:row;gap:16px;align-items:center;}
 .ft-icon{color:#fff;opacity:0.85;transition:opacity 0.15s;display:flex;align-items:center;}
@@ -453,6 +462,26 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           <button className={`menu-btn${menuOpen?" open":""}`} onClick={()=>setMenu(m=>!m)}>
             <span/><span/><span/>
           </button>
+        </div>
+      </div>
+
+      {/* STICKY BOTTOM BAR */}
+      <div className="sticky-bar">
+        <div className="sb-logo"><img src={LOGO_SRC} alt="cync"/></div>
+        <div className="sb-icons">
+          <a href="https://cync.art" target="_blank" rel="noopener noreferrer" className="sb-icon" aria-label="cync.art">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+              <path d="M9 21V12h6v9"/>
+            </svg>
+          </a>
+          <a href="https://instagram.com/cync.official" target="_blank" rel="noopener noreferrer" className="sb-icon" aria-label="@cync.official">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+            </svg>
+          </a>
         </div>
       </div>
 
@@ -580,28 +609,9 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 
       {/* FOOTER */}
       <div className="footer">
-        <div className="ft-top">
-          <div className="ft-logo"><img src={LOGO_SRC} alt="cync"/></div>
-          <div className="ft-icons">
-            <a href="https://cync.art" target="_blank" rel="noopener noreferrer" className="ft-icon" aria-label="cync website">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
-                <path d="M9 21V12h6v9"/>
-              </svg>
-            </a>
-            <a href="https://instagram.com/cync.official" target="_blank" rel="noopener noreferrer" className="ft-icon" aria-label="cync instagram">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                <circle cx="12" cy="12" r="4"/>
-                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
-              </svg>
-            </a>
-          </div>
-        </div>
-        <div className="ft-meta" style={{color:"rgba(255,255,255,0.7)"}}>
-          B1–1F, 577 Tongil-ro, Eunpyeong-gu, Seoul<br/>
-          © {new Date().getFullYear()} cync. All rights reserved.<br/>
-          Optimised for mobile.
+        <div className="ft-meta">
+          <span>© {new Date().getFullYear()} cync</span>
+          <span>Optimised for mobile</span>
         </div>
       </div>
     </div>
