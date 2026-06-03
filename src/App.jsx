@@ -115,6 +115,10 @@ export default function App() {
   const cats = city==="Seoul" ? SEOUL_CATS : CITY_CATS;
 
   useEffect(()=>{
+    fetchExhibition().then(ex => { if(ex) setExhibition(ex); });
+  },[]);
+
+  useEffect(()=>{
     if(view==="home") return;
     if(data[city]!==undefined) return;
     setLoading(true);
@@ -380,7 +384,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           <button className="overlay-close" onClick={()=>setMenu(false)}>✕</button>
         </div>
         <div className="overlay-list">
-          {[{id:"home",label:"Home"},{...CITIES[0],id:"Seoul"},{...CITIES[1],id:"Busan"},{...CITIES[2],id:"Daegu"},{...CITIES[3],id:"Gwangju"},{...CITIES[4],id:"Jeju"},{...CITIES[5],id:"Other Korea"}].map((item,i)=>{
+          {[{id:"home"},...CITIES].map((item,i)=>{
             const isAct = item.id==="home"?(view==="home"):isOnCity(item.id);
             return (
               <div key={item.id} className="overlay-item"
@@ -429,24 +433,30 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           </div>
         </div>
 
-        {/* CURRENT EXHIBITION */}
-        <div className="ex-section">
-          <div className="ex-eyebrow">
-            <span className="ex-eyebrow-lbl">Current Exhibition</span>
-            <span className="ex-eyebrow-lbl">cync, Seoul</span>
-          </div>
-          <div className="ex-poster-wrap">
-            <img className="ex-poster-img" src={POSTER_SRC} alt="Provisional Forms"/>
-          </div>
-          <div className="ex-caption">
-            <div className="ex-caption-top">
-              <div className="ex-title">Provisional Forms</div>
-              <a href="https://cync.art" target="_blank" rel="noopener noreferrer" className="ex-cta">View at cync ↗</a>
+        {/* CURRENT EXHIBITION — 시트 Exhibition 탭에서 관리 */}
+        {exhibition && (
+          <div className="ex-section">
+            <div className="ex-eyebrow">
+              <span className="ex-eyebrow-lbl">Current Exhibition</span>
+              <span className="ex-eyebrow-lbl">{exhibition.venue || "cync, Seoul"}</span>
             </div>
-            <div className="ex-artists">Hejum Bä, Sarah Cunningham, Sueyon Hwang, Xie Lingrou</div>
-            <div className="ex-meta">1 May – 13 Jun 2026 · Presented by cync</div>
+            {exhibition.posterUrl && (
+              <div className="ex-poster-wrap">
+                <img className="ex-poster-img" src={exhibition.posterUrl} alt={exhibition.title}/>
+              </div>
+            )}
+            <div className="ex-caption">
+              <div className="ex-caption-top">
+                <div className="ex-title">{exhibition.title}</div>
+                {exhibition.link && (
+                  <a href={exhibition.link} target="_blank" rel="noopener noreferrer" className="ex-cta">View ↗</a>
+                )}
+              </div>
+              {exhibition.artists && <div className="ex-artists">{exhibition.artists}</div>}
+              {exhibition.dates && <div className="ex-meta">{exhibition.dates} · Presented by cync</div>}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CITY INDEX */}
         <div className="idx-hdr"><span>#</span><span>City</span><span/></div>
