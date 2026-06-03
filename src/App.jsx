@@ -407,7 +407,8 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   background:#18fb00;z-index:80;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 var(--p);}
-.sb-logo img{height:22px;mix-blend-mode:multiply;}
+.sb-logo{display:flex;align-items:center;line-height:0;}
+.sb-logo img{height:20px;mix-blend-mode:multiply;display:block;margin-top:2px;}
 .sb-mid{font-family:var(--sans);font-size:12px;font-weight:400;
   color:#0a0a0a;letter-spacing:0.02em;text-align:center;}
 .sb-icons{display:flex;gap:18px;align-items:center;}
