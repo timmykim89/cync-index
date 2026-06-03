@@ -81,7 +81,7 @@ async function fetchSheet(name) {
     const text = await res.text();
     if(text.includes("<!DOCTYPE")||text.includes("<html")) return [];
     const rows = parseCSV(text);
-    rows.sort((a,b)=>a.name.localeCompare(b.name));
+    rows.sort((a,b)=>{ const sa=parseInt(a.star)||0,sb=parseInt(b.star)||0; return sb!==sa?sb-sa:a.name.localeCompare(b.name); });
     return rows;
   } catch{ return []; }
 }
@@ -186,8 +186,8 @@ export default function App() {
     setMenu(false); setExp(null);
     if(dest==="home"){ setView("home"); setRegion(null); return; }
     if(dest==="seoul"){ setCity("Seoul"); setView("seoul"); setRegion(null); setCat("Galleries"); return; }
-    if(regionId){ setCity("Seoul"); setView("region"); setRegion(regionId); setCat("Galleries"); return; }
-    setCity(dest); setView("city"); setRegion(null); setCat("Galleries");
+    if(regionId){ setCity("Seoul"); setView("region"); setRegion(regionId); setCat("Museums"); return; }
+    setCity(dest); setView("city"); setRegion(null); setCat("Museums");
   };
 
   const isOnCity = c => {
