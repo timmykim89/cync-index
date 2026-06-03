@@ -462,7 +462,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           <div className="info-cell">
             <div className="ic-label">This Index</div>
             <p className="ic-text">Galleries, museums, restaurants, hotels, and places we return to.</p>
-            <p className="ic-text italic" style={{marginTop:6}}>Filtered by us, for you.</p>
+            <p className="ic-text italic" style={{marginTop:6}}>selected by us, for you.</p>
           </div>
         </div>
 
@@ -507,7 +507,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
       {view==="seoul" && <>
         <div className="pg-head">
           <div className="pg-city"><span>Seoul</span></div>
-          <div className="pg-sub">a city index shaped by art, food, rooms, and routes.</div>
+          <div className="pg-sub">a city index shaped by art, food, and culture.</div>
         </div>
         <div className="idx-hdr"><span>#</span><span>District</span><span/></div>
         {SEOUL_REGIONS.map(r=>(
