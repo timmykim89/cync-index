@@ -409,8 +409,8 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   padding:0 var(--p);}
 .sb-logo{display:flex;align-items:center;line-height:0;}
 .sb-logo img{height:20px;mix-blend-mode:multiply;display:block;margin-top:2px;}
-.sb-mid{font-family:var(--sans);font-size:12px;font-weight:400;
-  color:#0a0a0a;letter-spacing:0.02em;text-align:center;}
+.sb-mid{font-family:var(--sans);font-size:14px;font-weight:400;
+  color:#0a0a0a;letter-spacing:0.01em;text-align:center;}
 .sb-icons{display:flex;gap:18px;align-items:center;}
 .sb-icon{color:#0a0a0a;opacity:1;transition:opacity 0.15s;display:flex;align-items:center;}
 .sb-icon:hover{opacity:0.45;}
