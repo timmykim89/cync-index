@@ -10,7 +10,7 @@ const SEOUL_REGIONS = [
   { id:"seochon",   en:["Eunpyeong","Seogyo","Yeonhui"],        parts:["은평","서교","연희"],   sheets:["eunpyeong"],  sub:"quieter streets, independent institutions, and cync.", num:"04" },
   { id:"cheongdam", en:["Cheongdam","Apgujeong","Samseong"],    parts:["청담","압구정","삼성"],  sheets:["cheongdam"], sub:"the gallery cluster and luxury corridor south of the river.", num:"05" },
   { id:"other",     en:["Other Seoul"],                        parts:["그 외 서울"],           sheets:["other"],    sub:"places in Seoul that don't fit a single neighbourhood.", num:"06" },
-  { id:"outskirts", en:["Seoul Outskirts"],                    parts:["서울 근교"],            sheets:["outskirts"], sub:"worth the trip from the centre.", num:"07" },
+  { id:"outskirts", en:["Seoul Outskirts"],                    parts:["서울 근교"],            sheets:["outskirts"], sub:"worth the trip from the center.", num:"07" },
 ];
 
 const CITIES = [
