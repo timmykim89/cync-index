@@ -48,6 +48,94 @@ function parseCSV(text) {
   }).filter(r=>r.name&&r.name.trim());
 }
 
+
+const PROXY_URL = 'https://symphonious-baklava-a36141.netlify.app/.netlify/functions/signup';
+
+function NewsletterBlock() {
+  const [email, setEmail]         = useState('');
+  const [agreed, setAgreed]       = useState(false);
+  const [emailErr, setEmailErr]   = useState('');
+  const [policyErr, setPolicyErr] = useState('');
+  const [status, setStatus]       = useState('idle'); // idle | loading | done
+  const [modal, setModal]         = useState(false);
+
+  const submit = async () => {
+    setEmailErr(''); setPolicyErr('');
+    let err = false;
+    if (!email) { setEmailErr('Please enter your email.'); err = true; }
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setEmailErr('Please enter a valid email address.'); err = true; }
+    if (!agreed) { setPolicyErr('Please agree to the collection and use of personal information.'); err = true; }
+    if (err) return;
+    setStatus('loading');
+    try {
+      const res  = await fetch(PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+      const data = await res.json();
+      if (res.ok && data.ok) { setStatus('done'); setEmail(''); }
+      else { setStatus('idle'); setEmailErr('Something went wrong. Please try again.'); }
+    } catch { setStatus('idle'); setEmailErr('Network error. Please try again.'); }
+  };
+
+  return (
+    <div className="nl-wrap">
+      <div className="nl-label">Newsletter</div>
+      <div className="nl-head">Be the first to know</div>
+      <div className="nl-sub">Subscribe to our newsletter</div>
+
+      <div className="nl-row">
+        <input
+          className="nl-input"
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          disabled={status === 'loading' || status === 'done'}
+        />
+        <button
+          className={`nl-btn${agreed ? ' active' : ''}`}
+          onClick={submit}
+          disabled={!agreed || status === 'loading' || status === 'done'}
+        >
+          {status === 'loading' ? '…' : status === 'done' ? 'Subscribed ✓' : 'Subscribe'}
+        </button>
+      </div>
+      {emailErr && <div className="nl-err">{emailErr}</div>}
+
+      <div className="nl-policy-row">
+        <label className="nl-check-label">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={e => { setAgreed(e.target.checked); if(e.target.checked) setPolicyErr(''); }}
+            className="nl-checkbox"
+          />
+          <span className="nl-check-text">
+            (required) I agree to{' '}
+            <button className="nl-policy-btn" onClick={() => setModal(true)}>
+              Collection and Use of Personal Information
+            </button>
+          </span>
+        </label>
+        {policyErr && <div className="nl-err">{policyErr}</div>}
+      </div>
+
+      {modal && (
+        <div className="nl-modal-wrap" onClick={() => setModal(false)}>
+          <div className="nl-modal" onClick={e => e.stopPropagation()}>
+            <button className="nl-modal-x" onClick={() => setModal(false)}>×</button>
+            <div className="nl-modal-title">Collection and Use of Personal Information</div>
+            <p className="nl-modal-text">We collect and use only the minimum personal information necessary for sending our newsletter. The collected information will not be used for any purpose other than sending, and will be immediately destroyed when the service ends or you unsubscribe.</p>
+            <p className="nl-modal-text" style={{marginTop:10}}>뉴스레터 발송을 위한 최소한의 개인정보를 수집하고 이용합니다. 수집된 정보는 발송 외 다른 목적으로 이용되지 않으며, 서비스가 종료되거나 구독을 해지할 경우 즉시 파기됩니다.</p>
+            <div className="nl-modal-foot">
+              <button className="nl-modal-close" onClick={() => setModal(false)}>Close</button>
+            </div>
+          </div>
+          <div className="nl-modal-bg"/>
+        </div>
+      )}
+    </div>
+  );
+}
+
 async function fetchExhibition() {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Exhibition`;
@@ -399,6 +487,55 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   text-underline-offset:3px;margin-right:12px;transition:opacity 0.12s;}
 .pd-link:hover{opacity:0.45;}
 
+
+/* ── NEWSLETTER ── */
+.nl-wrap{background:var(--G1);padding:28px var(--p) 24px;border-bottom:1px solid var(--K);}
+.nl-label{font-family:var(--mono);font-size:8px;font-weight:300;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--G4);margin-bottom:12px;}
+.nl-head{font-family:var(--disp);font-size:clamp(18px,4.5vw,26px);font-weight:700;
+  letter-spacing:-0.03em;color:var(--K);margin-bottom:3px;}
+.nl-sub{font-family:var(--sans);font-size:13px;font-weight:300;
+  color:var(--G6);margin-bottom:14px;}
+.nl-row{display:flex;gap:6px;align-items:stretch;}
+.nl-input{flex:1;min-width:0;height:38px;padding:0 12px;
+  font-family:var(--sans);font-size:13px;font-weight:300;
+  border:1px solid var(--G2);background:var(--W);
+  outline:none;color:var(--K);transition:border-color 0.12s;}
+.nl-input:focus{border-color:var(--K);}
+.nl-input::placeholder{color:var(--G4);}
+.nl-btn{height:38px;padding:0 16px;flex-shrink:0;
+  font-family:var(--mono);font-size:9px;font-weight:400;
+  letter-spacing:0.08em;text-transform:uppercase;
+  background:var(--G2);color:var(--G4);border:none;cursor:not-allowed;
+  transition:all 0.15s;}
+.nl-btn.active{background:var(--K);color:var(--W);cursor:pointer;}
+.nl-btn.active:hover{opacity:0.8;}
+.nl-err{font-family:var(--mono);font-size:9px;color:#d63030;
+  margin-top:4px;letter-spacing:0.04em;}
+.nl-policy-row{margin-top:10px;}
+.nl-check-label{display:flex;align-items:flex-start;gap:8px;cursor:pointer;}
+.nl-checkbox{margin-top:2px;flex-shrink:0;accent-color:var(--K);}
+.nl-check-text{font-family:var(--sans);font-size:11.5px;font-weight:300;
+  color:var(--G6);line-height:1.5;}
+.nl-policy-btn{background:none;border:none;padding:0;
+  font-family:var(--sans);font-size:11.5px;font-weight:300;
+  color:var(--K);text-decoration:underline;text-underline-offset:2px;
+  cursor:pointer;}
+.nl-modal-wrap{position:fixed;inset:0;display:flex;align-items:center;
+  justify-content:center;z-index:500;}
+.nl-modal{position:relative;z-index:1;width:min(92vw,400px);
+  background:var(--W);padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.2);}
+.nl-modal-x{position:absolute;top:8px;right:10px;background:none;border:none;
+  font-size:20px;cursor:pointer;color:var(--K);line-height:1;}
+.nl-modal-title{font-family:var(--disp);font-size:13px;font-weight:700;
+  letter-spacing:-0.02em;text-transform:uppercase;margin-bottom:10px;}
+.nl-modal-text{font-family:var(--sans);font-size:12px;font-weight:300;
+  color:var(--G6);line-height:1.7;}
+.nl-modal-foot{margin-top:14px;display:flex;justify-content:flex-end;}
+.nl-modal-close{height:30px;padding:0 14px;background:none;
+  border:1px solid var(--K);font-family:var(--mono);font-size:9px;
+  letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
+.nl-modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);}
 /* ── STATE / FOOTER ── */
 .st{padding:60px var(--p);text-align:center;font-family:var(--mono);font-size:8.5px;
   font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--G4);}
@@ -510,6 +647,8 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             <p className="ic-text italic" style={{marginTop:6}}>Filtered by us, for you.</p>
           </div>
         </div>
+
+        <NewsletterBlock/>
 
         {/* CURRENT EXHIBITION — 시트 Exhibition 탭에서 관리 */}
         {exhibition && (
