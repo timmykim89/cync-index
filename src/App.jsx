@@ -55,8 +55,22 @@ async function fetchExhibition() {
     if (!res.ok) return null;
     const text = await res.text();
     if (text.includes("<!DOCTYPE") || text.includes("<html")) return null;
-    const rows = parseCSV(text);
-    return rows[0] || null;
+    const lines = text.split("\n").filter(l => l.trim());
+    if (lines.length < 2) return null;
+    const parseLine = (line) => {
+      const r=[]; let cur="",q=false;
+      for(let i=0;i<line.length;i++){
+        if(line[i]==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}
+        else if(line[i]===","&&!q){r.push(cur.trim());cur="";}
+        else cur+=line[i];
+      }
+      r.push(cur.trim()); return r;
+    };
+    const headers = parseLine(lines[0]).map(h=>h.replace(/^"|"$/g,"").trim());
+    const vals = parseLine(lines[1]);
+    const obj = {};
+    headers.forEach((h,i)=>{ obj[h] = (vals[i]||"").replace(/^"|"$/g,"").trim(); });
+    return obj.title ? obj : null;
   } catch(e) { return null; }
 }
 
@@ -121,7 +135,14 @@ export default function App() {
   const [data,   setData]   = useState({});
   const [loading,setLoading]= useState(false);
   const [menuOpen,setMenu]  = useState(false);
-  const [exhibition,setExhibition] = useState(null);
+  const [exhibition,setExhibition] = useState({
+    title: "Provisional Forms",
+    artists: "Hejum Bä, Sarah Cunningham, Sueyon Hwang, Xie Lingrou",
+    dates: "1 May – 13 Jun 2026",
+    venue: "cync, Seoul",
+    posterUrl: "https://drive.google.com/thumbnail?id=1YDXMQc5rdQNYX8AG7J-neWmas9yDJkGN&sz=w1000",
+    link: "https://cync.art"
+  });
 
   const regionData = SEOUL_REGIONS.find(r=>r.id===region);
   const cats = city==="Seoul" ? SEOUL_CATS : CITY_CATS;
