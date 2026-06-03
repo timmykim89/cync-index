@@ -14,9 +14,9 @@ const SEOUL_REGIONS = [
 ];
 
 const CITIES = [
-  { id:"Seoul",       sub:"a city index shaped by art, food, rooms, and routes." },
+  { id:"Seoul",       sub:"a city index shaped by art, food, and culture." },
   { id:"Busan",       sub:"galleries, museums, and places we return to." },
-  { id:"Daegu",       sub:"a smaller city with a serious art scene." },
+  { id:"Daegu",       sub:"a condensed city with a serious art scene." },
   { id:"Gwangju",     sub:"biennale city. more than that." },
   { id:"Jeju",        sub:"the island, edited." },
   { id:"Elsewhere",   sub:"destinations outside the main cities, worth the trip." },
