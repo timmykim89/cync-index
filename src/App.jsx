@@ -708,7 +708,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
         </div>
       </>}
 
-      {/* ── SEOUL DISTRICTS ── */}      {/* ── SEOUL DISTRICTS ── */}
+      {/* ── SEOUL DISTRICTS ── */}
       {view==="seoul" && <>
         <div className="pg-head">
           <div className="pg-city"><span>Seoul</span></div>
@@ -723,7 +723,6 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             <span className="ir-arr">→</span>
           </div>
         ))}
-        </div>
       </>}
 
       {/* ── SEOUL REGION ── */}
