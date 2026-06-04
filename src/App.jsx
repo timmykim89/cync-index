@@ -51,6 +51,83 @@ function parseCSV(text) {
 
 const PROXY_URL = 'https://symphonious-baklava-a36141.netlify.app/.netlify/functions/signup';
 
+
+function StickyNewsletterPopup({ onClose }) {
+  const [email, setEmail]         = useState('');
+  const [agreed, setAgreed]       = useState(false);
+  const [emailErr, setEmailErr]   = useState('');
+  const [policyErr, setPolicyErr] = useState('');
+  const [status, setStatus]       = useState('idle');
+  const [modal, setModal]         = useState(false);
+
+  const submit = async () => {
+    setEmailErr(''); setPolicyErr('');
+    let err = false;
+    if (!email) { setEmailErr('Please enter your email.'); err = true; }
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setEmailErr('Please enter a valid email address.'); err = true; }
+    if (!agreed) { setPolicyErr('Please agree to the privacy policy.'); err = true; }
+    if (err) return;
+    setStatus('loading');
+    try {
+      const res  = await fetch(PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+      const data = await res.json();
+      if (res.ok && data.ok) { setStatus('done'); setEmail(''); setTimeout(()=>onClose(), 2500); }
+      else { setStatus('idle'); setEmailErr('Something went wrong. Please try again.'); }
+    } catch { setStatus('idle'); setEmailErr('Network error. Please try again.'); }
+  };
+
+  return (
+    <>
+      <div className="snp-wrap">
+        <div className="snp-header">
+          <div>
+            <div className="snp-title">Be the first to know</div>
+            <div className="snp-sub">subscribe to our newsletter</div>
+          </div>
+          <button className="snp-close" onClick={onClose}>×</button>
+        </div>
+        <div className="snp-row">
+          <input className="snp-input" type="email" placeholder="your@email.com"
+            value={email} onChange={e=>setEmail(e.target.value)}
+            disabled={status==='loading'||status==='done'}/>
+          <button className={`snp-btn${agreed?' active':''}`}
+            onClick={submit}
+            disabled={!agreed||status==='loading'||status==='done'}>
+            {status==='loading'?'…':status==='done'?'✓':'→'}
+          </button>
+        </div>
+        {emailErr && <div className="snp-err">{emailErr}</div>}
+        <div className="snp-policy-row">
+          <label className="snp-check-label">
+            <input type="checkbox" checked={agreed}
+              onChange={e=>{setAgreed(e.target.checked);if(e.target.checked)setPolicyErr('');}}
+              className="snp-checkbox"/>
+            <span className="snp-check-text">
+              (required) I agree to{' '}
+              <button className="snp-policy-btn" onClick={()=>setModal(true)}>privacy policy</button>
+            </span>
+          </label>
+          {policyErr && <div className="snp-err">{policyErr}</div>}
+        </div>
+      </div>
+
+      {modal && (
+        <div className="snp-modal-wrap" onClick={()=>setModal(false)}>
+          <div className="snp-modal" onClick={e=>e.stopPropagation()}>
+            <button className="snp-modal-x" onClick={()=>setModal(false)}>×</button>
+            <div className="snp-modal-title">Collection and Use of Personal Information</div>
+            <p className="snp-modal-text">We collect and use only the minimum personal information necessary for sending our newsletter. The collected information will not be used for any purpose other than sending, and will be immediately destroyed when the service ends or you unsubscribe.</p>
+            <p className="snp-modal-text" style={{marginTop:10}}>뉴스레터 발송을 위한 최소한의 개인정보를 수집하고 이용합니다. 수집된 정보는 발송 외 다른 목적으로 이용되지 않으며, 서비스가 종료되거나 구독을 해지할 경우 즉시 파기됩니다.</p>
+            <div className="snp-modal-foot">
+              <button className="snp-modal-close" onClick={()=>setModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function NewsletterBlock() {
   const [email, setEmail]         = useState('');
   const [agreed, setAgreed]       = useState(false);
@@ -70,7 +147,7 @@ function NewsletterBlock() {
     try {
       const res  = await fetch(PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
       const data = await res.json();
-      if (res.ok && data.ok) { setStatus('done'); setEmail(''); }
+      if (res.ok && data.ok) { setStatus('done'); setEmail(''); setTimeout(()=>onClose(), 2500); }
       else { setStatus('idle'); setEmailErr('Something went wrong. Please try again.'); }
     } catch { setStatus('idle'); setEmailErr('Network error. Please try again.'); }
   };
@@ -232,6 +309,7 @@ export default function App() {
   const [data,   setData]   = useState({});
   const [loading,setLoading]= useState(false);
   const [menuOpen,setMenu]  = useState(false);
+  const [sbMail,setSbMail]  = useState(true);
   const [exhibition,setExhibition] = useState({
     title: "Provisional Forms",
     artists: "Hejum Bä, Sarah Cunningham, Sueyon Hwang, Xie Lingrou",
@@ -543,6 +621,60 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   border:1px solid var(--K);font-family:var(--mono);font-size:9px;
   letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
 .nl-modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);}
+
+/* ── STICKY NEWSLETTER POPUP ── */
+.snp-wrap{position:fixed;bottom:62px;left:0;right:0;z-index:79;
+  background:#0a0a0a;padding:20px 18px 18px;
+  border-top:1px solid #222;}
+.snp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.snp-title{font-family:var(--disp);font-size:14px;font-weight:700;
+  letter-spacing:-0.03em;color:#18fb00;margin-bottom:3px;}
+.snp-sub{font-family:var(--mono);font-size:8px;font-weight:300;
+  letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);}
+.snp-close{background:none;border:none;color:rgba(255,255,255,0.4);
+  font-size:20px;cursor:pointer;line-height:1;padding:0;}
+.snp-close:hover{color:var(--W);}
+.snp-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.snp-input{flex:1;height:42px;background:rgba(255,255,255,0.09);
+  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
+  color:var(--W);font-family:var(--mono);font-size:11px;
+  padding:0 14px;outline:none;transition:border-color 0.12s;}
+.snp-input:focus{border-color:rgba(255,255,255,0.35);}
+.snp-input::placeholder{color:rgba(255,255,255,0.25);}
+.snp-btn{height:42px;width:52px;flex-shrink:0;
+  font-family:var(--mono);font-size:16px;font-weight:300;
+  background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.25);
+  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
+  cursor:not-allowed;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;}
+.snp-btn.active{background:#18fb00;color:#0a0a0a;border-color:#18fb00;cursor:pointer;}
+.snp-btn.active:hover{opacity:0.85;}
+.snp-err{font-family:var(--mono);font-size:9px;color:#ff6b6b;
+  margin-top:4px;letter-spacing:0.04em;}
+.snp-policy-row{margin-top:10px;}
+.snp-check-label{display:flex;align-items:center;gap:7px;cursor:pointer;}
+.snp-checkbox{flex-shrink:0;accent-color:#18fb00;}
+.snp-check-text{font-family:var(--sans);font-size:11px;font-weight:300;
+  color:rgba(255,255,255,0.3);line-height:1.5;}
+.snp-policy-btn{background:none;border:none;padding:0;
+  font-family:var(--sans);font-size:11px;font-weight:300;
+  color:rgba(255,255,255,0.55);text-decoration:underline;
+  text-underline-offset:2px;cursor:pointer;}
+.snp-modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;}
+.snp-modal{position:relative;background:#111;padding:22px 20px 18px;
+  width:100%;max-width:360px;}
+.snp-modal-x{position:absolute;top:8px;right:10px;background:none;
+  border:none;font-size:20px;cursor:pointer;color:rgba(255,255,255,0.4);line-height:1;}
+.snp-modal-x:hover{color:var(--W);}
+.snp-modal-title{font-family:var(--disp);font-size:12px;font-weight:700;
+  letter-spacing:-0.02em;text-transform:uppercase;color:#18fb00;margin-bottom:12px;}
+.snp-modal-text{font-family:var(--sans);font-size:12px;font-weight:300;
+  color:rgba(255,255,255,0.5);line-height:1.7;}
+.snp-modal-foot{margin-top:16px;display:flex;justify-content:flex-end;}
+.snp-modal-close{height:30px;padding:0 14px;background:none;
+  border:1px solid rgba(255,255,255,0.3);font-family:var(--mono);font-size:9px;
+  letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;color:var(--W);}
 /* ── STATE / FOOTER ── */
 .st{padding:60px var(--p);text-align:center;font-family:var(--mono);font-size:8.5px;
   font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--G4);}
@@ -621,6 +753,9 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
         </div>
       </div>
 
+      {/* STICKY NEWSLETTER POPUP */}
+      {sbMail && <StickyNewsletterPopup onClose={()=>setSbMail(false)}/>}
+
       {/* STICKY BOTTOM BAR */}
       <div className="sticky-bar">
         <div className="sb-left">
@@ -629,6 +764,12 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           <span className="sb-tag">a hybrid art institution</span>
         </div>
         <div className="sb-icons">
+          <button className="sb-icon" onClick={()=>setSbMail(m=>!m)} aria-label="newsletter" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M2 7l10 7 10-7"/>
+            </svg>
+          </button>
           <a href="https://cync.art" target="_blank" rel="noopener noreferrer" className="sb-icon" aria-label="cync.art">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
@@ -666,8 +807,6 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             <p className="ic-text italic" style={{marginTop:6}}>Filtered by us, for you.</p>
           </div>
         </div>
-
-        <NewsletterBlock/>
 
         {/* CURRENT EXHIBITION — 시트 Exhibition 탭에서 관리 */}
         {exhibition && (
