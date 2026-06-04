@@ -71,7 +71,7 @@ function StickyNewsletterPopup({ onClose }) {
     try {
       const res  = await fetch(PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
       const data = await res.json();
-      if (res.ok && data.ok) { setStatus('done'); setEmail(''); setTimeout(()=>onClose(), 2500); }
+      if (res.ok && data.ok) { setStatus('done'); setEmail(''); try{localStorage.setItem('cync_subscribed','1');}catch{} setTimeout(()=>onClose(), 2500); }
       else { setStatus('idle'); setEmailErr('Something went wrong. Please try again.'); }
     } catch { setStatus('idle'); setEmailErr('Network error. Please try again.'); }
   };
@@ -147,7 +147,7 @@ function NewsletterBlock() {
     try {
       const res  = await fetch(PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
       const data = await res.json();
-      if (res.ok && data.ok) { setStatus('done'); setEmail(''); setTimeout(()=>onClose(), 2500); }
+      if (res.ok && data.ok) { setStatus('done'); setEmail(''); try{localStorage.setItem('cync_subscribed','1');}catch{} setTimeout(()=>onClose(), 2500); }
       else { setStatus('idle'); setEmailErr('Something went wrong. Please try again.'); }
     } catch { setStatus('idle'); setEmailErr('Network error. Please try again.'); }
   };
@@ -309,7 +309,9 @@ export default function App() {
   const [data,   setData]   = useState({});
   const [loading,setLoading]= useState(false);
   const [menuOpen,setMenu]  = useState(false);
-  const [sbMail,setSbMail]  = useState(true);
+  const [sbMail,setSbMail]  = useState(()=>{
+    try { return !localStorage.getItem('cync_subscribed'); } catch { return true; }
+  });
   const [exhibition,setExhibition] = useState({
     title: "Provisional Forms",
     artists: "Hejum Bä, Sarah Cunningham, Sueyon Hwang, Xie Lingrou",
@@ -630,8 +632,8 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 .snp-title{font-family:var(--disp);font-size:14px;font-weight:700;
   letter-spacing:-0.03em;color:#18fb00;margin-bottom:3px;}
 .snp-sub{font-family:var(--mono);font-size:8px;font-weight:300;
-  letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);}
-.snp-close{background:none;border:none;color:rgba(255,255,255,0.4);
+  letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.65);}
+.snp-close{background:none;border:none;color:rgba(255,255,255,0.7);
   font-size:20px;cursor:pointer;line-height:1;padding:0;}
 .snp-close:hover{color:var(--W);}
 .snp-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
@@ -643,11 +645,11 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 .snp-input::placeholder{color:rgba(255,255,255,0.25);}
 .snp-btn{height:42px;width:52px;flex-shrink:0;
   font-family:var(--mono);font-size:16px;font-weight:300;
-  background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.25);
-  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
-  cursor:not-allowed;transition:all 0.15s;
+  background:#18fb00;color:#0a0a0a;
+  border:none;border-radius:6px;
+  opacity:0.4;cursor:not-allowed;transition:all 0.15s;
   display:flex;align-items:center;justify-content:center;}
-.snp-btn.active{background:#18fb00;color:#0a0a0a;border-color:#18fb00;cursor:pointer;}
+.snp-btn.active{opacity:1;cursor:pointer;}
 .snp-btn.active:hover{opacity:0.85;}
 .snp-err{font-family:var(--mono);font-size:9px;color:#ff6b6b;
   margin-top:4px;letter-spacing:0.04em;}
@@ -655,10 +657,10 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 .snp-check-label{display:flex;align-items:center;gap:7px;cursor:pointer;}
 .snp-checkbox{flex-shrink:0;accent-color:#18fb00;}
 .snp-check-text{font-family:var(--sans);font-size:11px;font-weight:300;
-  color:rgba(255,255,255,0.3);line-height:1.5;}
+  color:rgba(255,255,255,0.65);line-height:1.5;}
 .snp-policy-btn{background:none;border:none;padding:0;
   font-family:var(--sans);font-size:11px;font-weight:300;
-  color:rgba(255,255,255,0.55);text-decoration:underline;
+  color:var(--W);text-decoration:underline;
   text-underline-offset:2px;cursor:pointer;}
 .snp-modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.6);
   z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -804,7 +806,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           <div className="info-cell">
             <div className="ic-label">This Index</div>
             <p className="ic-text">Galleries, museums, restaurants, hotels, and places we return to.</p>
-            <p className="ic-text italic" style={{marginTop:6}}>Filtered by us, for you.</p>
+            <p className="ic-text italic" style={{marginTop:6}}>Selected by us, for you.</p>
           </div>
         </div>
 
