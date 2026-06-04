@@ -696,6 +696,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 
         {/* CITY INDEX */}
         <div className="idx-hdr"><span>#</span><span>City</span><span/></div>
+        <div style={{paddingBottom:'80px'}}>
         {CITIES.map((c,i)=>(
           <div key={c.id} className="idx-row"
             onClick={()=> c.id==="Seoul" ? nav("seoul") : nav(c.id)}>
@@ -704,6 +705,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             <span className="ir-arr">→</span>
           </div>
         ))}
+        </div>
       </>}
 
       {/* ── SEOUL DISTRICTS ── */}      {/* ── SEOUL DISTRICTS ── */}
@@ -721,6 +723,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             <span className="ir-arr">→</span>
           </div>
         ))}
+        </div>
       </>}
 
       {/* ── SEOUL REGION ── */}
