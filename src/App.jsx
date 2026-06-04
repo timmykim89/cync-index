@@ -330,6 +330,19 @@ export default function App() {
     fetchExhibition().then(ex => { if(ex) setExhibition(ex); });
   },[]);
 
+
+  // 도시/지역 진입 시 뉴스레터 팝업 트리거
+  useEffect(()=>{
+    if(view==="home") return;
+    try {
+      if(localStorage.getItem('cync_subscribed')) return; // 구독자 제외
+      const seen = JSON.parse(sessionStorage.getItem('nl_seen_views')||'[]');
+      if(seen.includes(view)) return; // 이미 이 세션에서 봤으면 패스
+      sessionStorage.setItem('nl_seen_views', JSON.stringify([...seen, view]));
+      setSbMail(true);
+    } catch(e) {}
+  },[view]);
+
   useEffect(()=>{
     if(view==="home") return;
     if(data[city]!==undefined) return;
