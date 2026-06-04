@@ -331,17 +331,14 @@ export default function App() {
   },[]);
 
 
-  // 도시/지역 진입 시 뉴스레터 팝업 트리거
+  // 도시/지역 진입 시 뉴스레터 팝업 트리거 (구독자 제외 항상 표시)
   useEffect(()=>{
     if(view==="home") return;
     try {
-      if(localStorage.getItem('cync_subscribed')) return; // 구독자 제외
-      const seen = JSON.parse(sessionStorage.getItem('nl_seen_views')||'[]');
-      if(seen.includes(view)) return; // 이미 이 세션에서 봤으면 패스
-      sessionStorage.setItem('nl_seen_views', JSON.stringify([...seen, view]));
+      if(localStorage.getItem('cync_subscribed')) return;
       setSbMail(true);
     } catch(e) {}
-  },[view]);
+  },[view, city, region]);
 
   useEffect(()=>{
     if(view==="home") return;
