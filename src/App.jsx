@@ -538,7 +538,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   background:var(--K);}
 .idx-hdr span{font-family:var(--mono);font-size:7.5px;font-weight:300;
   letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.45);}
-.idx-row{display:grid;grid-template-columns:32px 1fr 14px;
+.idx-row{display:grid;grid-template-columns:32px 1fr;
   align-items:center;min-height:58px;padding:0 var(--p);
   border-bottom:1px solid var(--G2);cursor:pointer;
   position:relative;overflow:hidden;}
@@ -546,14 +546,12 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   background:var(--K);width:0;
   transition:width 0.2s cubic-bezier(.4,0,.2,1);z-index:0;}
 .idx-row:hover::after{width:100%;}
-.idx-row:hover .ir-n,.idx-row:hover .ir-label,.idx-row:hover .ir-arr{color:#1afc00;}
+.idx-row:hover .ir-n,.idx-row:hover .ir-label{color:#1afc00;}
 .ir-n{font-family:var(--mono);font-size:8.5px;font-weight:300;
   color:var(--G4);z-index:1;transition:color 0.2s;}
 .ir-label{font-family:var(--disp);font-size:clamp(11px,2.7vw,13.5px);
   font-weight:700;letter-spacing:-0.015em;text-transform:uppercase;
   color:var(--K);z-index:1;transition:color 0.2s;padding:16px 8px 16px 0;}
-.ir-arr{font-size:10px;color:var(--G4);z-index:1;
-  transition:color 0.2s;text-align:right;font-family:var(--mono);}
 
 /* ── PAGE HEADER ── */
 .pg-head{padding:32px var(--p) 0;background:var(--W);}
@@ -886,7 +884,6 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             onClick={()=> c.id==="Seoul" ? nav("seoul") : nav(c.id)}>
             <span className="ir-n">{String(i+1).padStart(2,"0")}</span>
             <span className="ir-label">{c.id}</span>
-            <span className="ir-arr">→</span>
           </div>
         ))}
         </div>
@@ -904,7 +901,6 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
             onClick={()=>nav("region",r.id)}>
             <span className="ir-n">{r.num}</span>
             <span className="ir-label">{r.en.join(" · ")}</span>
-            <span className="ir-arr">→</span>
           </div>
         ))}
       </>}
