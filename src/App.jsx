@@ -812,12 +812,6 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
           <span className="sb-tag">a hybrid art institution</span>
         </div>
         <div className="sb-icons">
-          <button className="sb-icon" onClick={()=>setSbMail(m=>!m)} aria-label="newsletter" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M2 7l10 7 10-7"/>
-            </svg>
-          </button>
           <a href="https://cync.art" target="_blank" rel="noopener noreferrer" className="sb-icon" aria-label="cync.art">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
