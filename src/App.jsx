@@ -441,7 +441,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 .hi-headline{font-family:var(--disp);font-size:clamp(26px,7.5vw,44px);
   font-weight:700;letter-spacing:-0.03em;line-height:1.05;color:var(--K);
   text-wrap:pretty;text-transform:uppercase;margin-bottom:16px;}
-.hi-sub{font-family:var(--mono);font-size:10px;font-weight:300;
+.hi-sub{font-family:var(--mono);font-size:12px;font-weight:300;
   letter-spacing:0.08em;text-transform:uppercase;
   line-height:2;color:var(--G6);}
 .hi-cities{display:none;}
@@ -449,7 +449,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
   .home-intro{min-height:calc(100vh - 62vh);display:flex;flex-direction:column;
     justify-content:center;padding:64px 40px 72px;}
   .hi-headline{font-size:clamp(40px,4.6vw,72px);max-width:20ch;}
-  .hi-sub{font-size:11px;margin-bottom:0;}
+  .hi-sub{font-size:13px;margin-bottom:0;}
   .hi-cities{display:flex;flex-wrap:wrap;gap:12px 36px;margin-top:44px;}
   .hi-city{font-family:var(--disp);font-size:17px;font-weight:700;
     letter-spacing:-0.015em;text-transform:uppercase;color:var(--K);
@@ -865,7 +865,7 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 
         {/* 인트로 — 이 페이지가 무엇인지 바로 알려주는 섹션 */}
         <div className="home-intro">
-          <div className="hi-headline">Galleries, museums, and places we return to.</div>
+          <div className="hi-headline">Galleries, museums, and places worth visiting</div>
           <div className="hi-sub">Curated by cync, across Seoul, Busan, Daegu, Gwangju, and Jeju.</div>
           {/* PC 전용 도시 링크 — 모바일에서는 하단 도시 목록이 대신한다 */}
           <div className="hi-cities">
