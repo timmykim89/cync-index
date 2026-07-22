@@ -372,11 +372,29 @@ export default function App() {
 
   const nav = (dest, regionId=null) => {
     setMenu(false); setExp(null);
-    if(dest==="home"){ setView("home"); setRegion(null); return; }
-    if(dest==="seoul"){ setCity("Seoul"); setView("seoul"); setRegion(null); setCat("Galleries"); return; }
-    if(regionId){ setCity("Seoul"); setView("region"); setRegion(regionId); setCat("Museums"); return; }
-    setCity(dest); setView("city"); setRegion(null); setCat("Museums");
+    let next;
+    if(dest==="home"){ next={view:"home",city:"Seoul",region:null,cat}; }
+    else if(dest==="seoul"){ next={view:"seoul",city:"Seoul",region:null,cat:"Galleries"}; }
+    else if(regionId){ next={view:"region",city:"Seoul",region:regionId,cat:"Museums"}; }
+    else { next={view:"city",city:dest,region:null,cat:"Museums"}; }
+    window.history.pushState(next, "");
+    applyNavState(next);
   };
+
+  const applyNavState = (s) => {
+    setView(s.view); setCity(s.city); setRegion(s.region); setCat(s.cat); setExp(null);
+  };
+
+  useEffect(() => {
+    window.history.replaceState({view:"home",city:"Seoul",region:null,cat}, "");
+    const onPop = (e) => {
+      if(e.state){ applyNavState(e.state); }
+      else { setView("home"); setCity("Seoul"); setRegion(null); }
+      setMenu(false); setExp(null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const isOnCity = c => {
     if(c==="Seoul") return city==="Seoul"&&(view==="seoul"||view==="region");
@@ -385,12 +403,12 @@ export default function App() {
 
   /* ── CSS ── */
   const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;1,9..40,300&family=DM+Mono:wght@300;400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;1,9..40,300&family=DM+Mono:wght@300;400&display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --K:#0a0a0a;--W:#fff;--G1:#f5f5f5;--G2:#d8d8d8;--G4:#777;--G6:#333;
-  --p:20px;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Unbounded',sans-serif;
+  --p:20px;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Bricolage Grotesque',sans-serif;
 }
 html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;}
 
@@ -571,9 +589,9 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
 .cat-nav{display:flex;overflow-x:auto;scrollbar-width:none;
   background:#0a0a0a;border-top:1px solid var(--K);border-bottom:1px solid var(--G2);padding:0 var(--p);}
 .cat-nav::-webkit-scrollbar{display:none;}
-.cat-btn{flex-shrink:0;height:38px;padding:0;margin-right:20px;
+.cat-btn{flex-shrink:0;height:30px;padding:0;margin-right:20px;
   display:flex;align-items:center;
-  font-family:var(--mono);font-size:9px;font-weight:300;
+  font-family:var(--mono);font-size:9px;font-weight:400;
   letter-spacing:0.04em;text-transform:uppercase;
   color:var(--W);background:none;border:none;cursor:pointer;
   border-bottom:1.5px solid transparent;transition:all 0.12s;}
@@ -783,7 +801,10 @@ html,body{background:var(--W);color:var(--K);-webkit-font-smoothing:antialiased;
         {!showBack && <div className="bar-logo-wrap" onClick={()=>nav("home")}><img src={BAR_LOGO_WHITE_SRC} className="bar-logo-img" alt="cync index"/></div>}
         {showBack && (
           <div className="bar-back" onClick={()=>{
-            if(view==="region"){setView("seoul");setRegion(null);setExp(null);}
+            if(view==="region"){
+              const s={view:"seoul",city:"Seoul",region:null,cat:"Galleries"};
+              window.history.pushState(s,""); applyNavState(s);
+            }
             else nav("home");
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
